@@ -4,7 +4,7 @@
 > **AI 驱动的 Web 加密流量渗透测试自动化代理框架**
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-blue)](https://claude.ai/code)
-[![Python](https://img.shields.io/badge/Python-3.8+-green)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.12+-green)](https://python.org)
 [![mitmproxy](https://img.shields.io/badge/mitmproxy-10+-orange)](https://mitmproxy.org)
 [![License](https://img.shields.io/badge/License-MIT-red)](LICENSE)
 
