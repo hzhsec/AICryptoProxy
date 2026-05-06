@@ -61,6 +61,8 @@ AI 模式:   AI 看代码 → AI 分析 → AI 生成脚本 → 人只需启动
 - 像 Python 开发者一样**编写生产级 mitmproxy 脚本**
 - 像技术支持一样**给出启动命令和排错建议**
 
+ai快速发展，让逆向不再困难，这里感谢**DeepSeek**大善人，以下**claude code**主要是通过调用deepseek api。
+
 ---
 
 ## 2. AICryptoProxy 是什么
@@ -814,3 +816,9 @@ AICryptoProxy 代表的不仅仅是一个工具，更是一种新的工作范式
 - [Claude Code](https://claude.ai/code) — AI 编程助手
 - [pycryptodome](https://pycryptodome.readthedocs.io/) — Python 加密库
 - [Burp Suite](https://portswigger.net/burp) — Web 安全测试工具
+
+**参考文章**
+
+[1] 前端自动化加解密: mitmproxy+burpsuit联动 https://mp.weixin.qq.com/s/3xXpkObDQ3x7UB_yGCk6cw
+
+[2] Web Crypto Proxy Skill 全自动网站加密逻辑分析与双向透明加解密代理工具 https://mp.weixin.qq.com/s/wxgVCYm8yqEuN8JXqQsBqQ
