@@ -48,9 +48,88 @@ skill: mitm_proxy https://target.com
 
 AI 将依次执行：
 
+0. **Phase 0 - 首次配置**（检查环境，未配置则询问并验证）
 1. **Phase 1 - JS 逆向分析**（js-reverse MCP + 浏览器调试）
 2. **Phase 2 - 询问用户选择模式**
 3. **Phase 3 - 生成对应模式的 mitmproxy 脚本**
+
+---
+
+## Phase 0: 首次配置（AI 自动处理）
+
+首次使用时会自动引导配置，后续跳过此步。
+
+### 检查流程
+
+```bash
+# 检查项目根目录是否存在 .env 配置文件
+test -f .env && echo "CONFIGURED" || echo "NOT_CONFIGURED"
+```
+
+- 如果已配置（有 `.env` 且包含 `CHROME_PATH`）→ **跳过 Phase 0**，直接进入 Phase 1
+- 如果未配置 → **执行下面配置流程**
+
+### 配置流程
+
+AI 依次执行以下步骤，每步先提问 → 再验证 → 再继续：
+
+**Step 1: 询问 Chrome 路径**
+
+```
+[配置] 检测到首次使用，需要配置 Chrome 浏览器路径。
+请提供 Chrome 可执行文件的路径:
+
+  常见位置:
+  - Windows: C:\Program Files\Google\Chrome\Application\chrome.exe
+  - macOS:   /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  - Linux:   /usr/bin/google-chrome
+
+请输入路径（或直接回车跳过，跳过时使用默认值 "chrome"）:
+```
+
+**Step 2: AI 验证路径**
+
+```bash
+# 验证 Chrome 路径是否存在（根据用户输入替换）
+# AI 根据用户系统自动选择对应的验证方式:
+
+# Windows:
+if exist "USER_INPUT_PATH" (echo VALID) else (echo INVALID)
+
+# macOS / Linux:
+test -f "USER_INPUT_PATH" && echo "VALID" || echo "INVALID"
+```
+
+- 如果无效 → 提示错误，让用户重新输入（可跳过使用默认值 `chrome`）
+- 如果有效 → 保存配置
+
+**Step 3: 保存配置到 `.env`**
+
+```bash
+# 将配置写入项目根目录的 .env 文件
+echo "# AICryptoProxy 配置" > .env
+echo "CHROME_PATH=USER_INPUT_PATH" >> .env
+echo "" >> .env
+echo "# 配置说明:" >> .env
+echo "# CHROME_PATH: Chrome 可执行文件路径" >> .env
+```
+
+完成后提示用户：
+
+```
+[+] 配置已保存到 .env 文件，后续使用会自动读取。
+    如需修改，可编辑 .env 文件或直接删除后重新配置。
+```
+
+### AI 使用配置的规则
+
+在后续步骤中，凡需要启动 Chrome 的地方，从 `.env` 中读取 `CHROME_PATH` 变量并使用：
+
+```bash
+# AI 读取配置并启动 Chrome
+CHROME_PATH=$(grep CHROME_PATH .env | cut -d= -f2-)
+"$CHROME_PATH" --remote-debugging-port=9222 --user-data-dir="/tmp/chrome_debug_9222" --no-first-run --no-default-browser-check --new-window "https://target.com"
+```
 
 ---
 
@@ -58,11 +137,18 @@ AI 将依次执行：
 
 ### Step 1: 启动调试浏览器
 
-使用下面的命令启动一个带远程调试端口的 Chrome 实例（js-reverse MCP 依赖端口 9222）：
+从 `.env` 读取 `CHROME_PATH` 启动 Chrome（js-reverse MCP 依赖端口 9222）：
 
 ```bash
-"C:\Users\huangzonghui\AppData\Local\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\Users\huangzonghui\AppData\Local\Temp\chrome_debug_9222" --no-first-run --no-default-browser-check --new-window "https://target.com" &
+# AI 从 .env 读取 CHROME_PATH 并启动
+# 如果 .env 中配置了路径则使用配置的路径，否则默认用 "chrome"
+CHROME_PATH=$(grep CHROME_PATH .env 2>/dev/null | cut -d= -f2-)
+CHROME_PATH=${CHROME_PATH:-chrome}
+"$CHROME_PATH" --remote-debugging-port=9222 --user-data-dir="/tmp/chrome_debug_9222" --no-first-run --no-default-browser-check --new-window "https://target.com" &
 ```
+
+> **Windows 注意:** `.env` 中的路径可能包含空格（如 `C:\Program Files\...`），AI 需确保引号包裹正确。
+> 临时目录在 Windows 下使用 `%TEMP%\chrome_debug_9222`。
 
 验证连接:
 ```bash
@@ -327,10 +413,10 @@ addons = [UpstreamEncryptProxy()]
 
 ```bash
 # 终端 1: 启动上游代理 (Burp → Server, 加密)，普通模式
-mitmdump -s {domain}_upstream_proxy.py -p 8083
+mitmdump -s {domain}/upstream_encrypt_proxy.py -p 8083
 
 # 终端 2: 启动下游代理 (Browser → Burp, 解密)，必须用 --mode upstream 指向 Burp
-mitmdump -s {domain}_downstream_proxy.py --mode upstream:http://127.0.0.1:8080 -p 8082
+mitmdump -s {domain}/downstream_decrypt_proxy.py --mode upstream:http://127.0.0.1:8080 -p 8082
 
 # Burp Suite 配置:
 # Settings → Proxy → Upstream Proxy Servers
@@ -379,7 +465,7 @@ addons = [DecryptOnlyProxy()]
 
 ```bash
 # 启动
-mitmdump -s {domain}_decrypt_only.py -p 8082
+mitmdump -s {domain}/decrypt_only_proxy.py -p 8082
 
 # 浏览器代理 → 127.0.0.1:8082
 # 或 Burp 上游代理 → 127.0.0.1:8082
@@ -424,7 +510,7 @@ addons = [EncryptOnlyProxy()]
 
 ```bash
 # 启动
-mitmdump -s {domain}_encrypt_only.py -p 8083
+mitmdump -s {domain}/encrypt_only_proxy.py -p 8083
 
 # Burp → Upstream Proxy: *{domain}* → 127.0.0.1:8083
 ```
@@ -520,20 +606,20 @@ def sm4_decrypt(ciphertext: str, key: bytes) -> str:
 **双代理模式：**
 ```bash
 # 终端 1 - 上游加密代理 (Burp → Server)
-mitmdump -s {domain}_upstream_proxy.py -p 8083
+mitmdump -s {domain}/upstream_encrypt_proxy.py -p 8083
 
 # 终端 2 - 下游解密代理 (Browser → Burp)
-mitmdump -s {domain}_downstream_proxy.py -p 8082
+mitmdump -s {domain}/downstream_decrypt_proxy.py -p 8082
 ```
 
 **仅解密模式：**
 ```bash
-mitmdump -s {domain}_decrypt_only.py -p 8082
+mitmdump -s {domain}/decrypt_only_proxy.py -p 8082
 ```
 
 **仅加密模式：**
 ```bash
-mitmdump -s {domain}_encrypt_only.py -p 8083
+mitmdump -s {domain}/encrypt_only_proxy.py -p 8083
 ```
 
 ### 2. 代理配置说明

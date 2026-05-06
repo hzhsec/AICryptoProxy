@@ -35,22 +35,135 @@ mitmproxy 脚本里**一行加解密代码都不用写**。
 
 ## 工作流程
 
-### Phase 0: 检查 JSRPC 服务端
+### Phase 0: 首次配置（AI 自动处理）
+
+首次使用时会自动引导配置，后续跳过此步。
+
+#### 检查流程
 
 ```bash
-# 如果没启动，先启动
-"F:\JSReverser-MCP\JSRPC\window_amd64.exe" -c "F:\JSReverser-MCP\JSRPC\config.yaml"
+# 检查 .env 是否已配置所需路径
+test -f .env && echo "CONFIGURED" || echo "NOT_CONFIGURED"
+```
+
+- 如果 `.env` 已包含 `CHROME_PATH` 和 `JSRPC_PATH` → **跳过**，直接进入 Phase 1
+- 如果未配置 → **执行下面配置流程**
+
+AI 依次检查以下配置项，每步先提问 → 再验证 → 再继续：
+
+#### 配置项 1: Chrome 路径
+
+```
+[配置] 检测到首次使用，需要配置 Chrome 浏览器路径。
+请提供 Chrome 可执行文件的路径:
+
+  常见位置:
+  - Windows: C:\Program Files\Google\Chrome\Application\chrome.exe
+  - macOS:   /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  - Linux:   /usr/bin/google-chrome
+
+请输入路径（或直接回车跳过，跳过时使用默认值 "chrome"）:
+```
+
+验证:
+
+```bash
+# Windows:
+if exist "USER_INPUT_PATH" (echo VALID) else (echo INVALID)
+
+# macOS / Linux:
+test -f "USER_INPUT_PATH" && echo "VALID" || echo "INVALID"
+```
+
+#### 配置项 2: JSRPC 服务端路径
+
+```
+[配置] 需要配置 JSRPC 服务端路径。
+JSRPC 用于桥接浏览器和 mitmproxy，实现零逆向加解密。
+
+请提供 JSRPC 服务端所在目录路径（包含 window_amd64.exe 或 window_x64.exe 的目录）:
+
+  下载地址: https://github.com/jxhczhl/JsRpc/releases
+
+  常见位置:
+  - Windows: C:\Tools\JSRPC
+  - 本项目 jsrpc/ 目录
+
+请输入路径（或直接回车跳过，跳过后需要手动启动 JSRPC 服务端）:
+```
+
+验证:
+
+```bash
+# Windows:
+if exist "USER_INPUT_PATH\window_amd64.exe" (echo VALID) else (echo INVALID)
+if exist "USER_INPUT_PATH\config.yaml" (echo CONFIG_OK) else (echo CONFIG_MISSING)
+
+# macOS / Linux: JSRPC 仅有 Windows 版，提醒用户使用 Wine 或 Windows 环境
+```
+
+- 如果 `config.yaml` 不存在 → 提示用户从 JSRPC 发布页获取
+
+#### 保存配置到 `.env`
+
+```bash
+# 写入 .env 文件
+echo "# AICryptoProxy 配置" > .env
+echo "CHROME_PATH=USER_INPUT_CHROME_PATH" >> .env
+echo "JSRPC_PATH=USER_INPUT_JSRPC_PATH" >> .env
+echo "" >> .env
+echo "# 配置说明:" >> .env
+echo "# CHROME_PATH: Chrome 可执行文件路径" >> .env
+echo "# JSRPC_PATH: JSRPC 服务端目录路径" >> .env
+```
+
+完成后提示:
+
+```
+[+] 配置已保存到 .env 文件，后续使用会自动读取。
+    如需修改，可编辑 .env 文件或直接删除后重新配置。
+```
+
+#### AI 使用配置的规则
+
+在后续步骤中，凡需要启动 Chrome 或 JSRPC 的地方，优先从 `.env` 中读取：
+
+```bash
+# 读 CHROME_PATH
+CHROME_PATH=$(grep CHROME_PATH .env 2>/dev/null | cut -d= -f2-)
+CHROME_PATH=${CHROME_PATH:-chrome}
+
+# 读 JSRPC_PATH
+JSRPC_PATH=$(grep JSRPC_PATH .env 2>/dev/null | cut -d= -f2-)
+JSRPC_PATH=${JSRPC_PATH:-./jsrpc}
+```
+
+---
+
+### Phase 0: 检查 JSRPC 服务端
+
+从 `.env` 读取 `JSRPC_PATH` 启动服务：
+
+```bash
+# AI 从 .env 读取 JSRPC_PATH
+JSRPC_PATH=$(grep JSRPC_PATH .env 2>/dev/null | cut -d= -f2-)
+JSRPC_PATH=${JSRPC_PATH:-./jsrpc}
+"$JSRPC_PATH/window_amd64.exe" -c "$JSRPC_PATH/config.yaml"
 
 # 验证
 curl http://127.0.0.1:12080/go
 # → {"data":"请传入action来调用客户端方法","status":200}
 ```
+如果启动失败，提示用户检查 `.env` 中的 `JSRPC_PATH` 是否正确，或手动启动 JSRPC 服务端。
 
 ### Phase 1: 启动浏览器 + 连接 js-reverse MCP
 
+从 `.env` 读取 `CHROME_PATH` 启动 Chrome：
+
 ```bash
-# 启动 Chrome（如果需要）
-"C:\Users\huangzonghui\AppData\Local\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\Users\huangzonghui\AppData\Local\Temp\chrome_debug_9222" --no-first-run --no-default-browser-check --new-window "https://target.com"
+CHROME_PATH=$(grep CHROME_PATH .env 2>/dev/null | cut -d= -f2-)
+CHROME_PATH=${CHROME_PATH:-chrome}
+"$CHROME_PATH" --remote-debugging-port=9222 --user-data-dir="/tmp/chrome_debug_9222" --no-first-run --no-default-browser-check --new-window "https://target.com"
 ```
 
 用 js-reverse MCP 连接页面。
@@ -91,7 +204,7 @@ typeof CryptoJS !== 'undefined' && CryptoJS.AES
     var rpc_client_id;
     var HlClient = function (wsURL) { /* ... 完整 HlClient 实现 ... */ };
     // 原型方法: connect, send, regAction, _reportActions, handlerRequest, sendResult
-    // 具体实现见 F:\JSReverser-MCP\JSRPC\客户端注入.js.yaml
+    // 具体实现见 JSRPC 服务端的客户端注入.js.yaml
 
     // ===== 2. 等待目标库就绪 =====
     // 必须等目标加密库加载完再注册 action，否则 CryptoJS 等为 undefined
@@ -166,7 +279,7 @@ typeof CryptoJS !== 'undefined' && CryptoJS.AES
 })();
 ```
 
-**写成 JS 文件写入磁盘**，路径如 `output/jsrpc_inject.js`。
+**写成 JS 文件写入磁盘**，路径如 `{domain}/jsrpc_inject.js`。
 
 ### Phase 4: 注入到页面
 
@@ -376,7 +489,7 @@ addons = [UpstreamJSRPCProxy()]
 ## 输出文件结构
 
 ```
-output/
+{domain}/
 ├── jsrpc_inject.js              # 浏览器端注入 JS（HlClient + action 注册）
 ├── jsrpc_client.py              # JSRPC HTTP API 封装
 ├── downstream_jsrpc_proxy.py    # 下游解密代理
@@ -388,14 +501,16 @@ output/
 ## 启动命令
 
 ```bash
-# 1. JSRPC 服务端
-"F:\JSReverser-MCP\JSRPC\window_amd64.exe" -c "F:\JSReverser-MCP\JSRPC\config.yaml"
+# 1. JSRPC 服务端（从 .env 读取路径）
+JSRPC_PATH=$(grep JSRPC_PATH .env 2>/dev/null | cut -d= -f2-)
+JSRPC_PATH=${JSRPC_PATH:-./jsrpc}
+"$JSRPC_PATH/window_amd64.exe" -c "$JSRPC_PATH/config.yaml"
 
 # 2. 下游解密代理（必须 --mode upstream 指向 Burp）
-mitmdump -s output/downstream_jsrpc_proxy.py --mode upstream:http://127.0.0.1:8080 -p 8082
+mitmdump -s {domain}/downstream_jsrpc_proxy.py --mode upstream:http://127.0.0.1:8080 -p 8082
 
 # 3. 上游加密代理
-mitmdump -s output/upstream_jsrpc_proxy.py -p 8083
+mitmdump -s {domain}/upstream_jsrpc_proxy.py -p 8083
 ```
 
 ### 代理配置

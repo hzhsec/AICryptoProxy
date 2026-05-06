@@ -1,0 +1,26 @@
+# 用户本地配置（包含绝对路径，不上传）
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# 输出目录
+output/
+
+# 测试产物
+test/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

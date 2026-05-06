@@ -115,10 +115,25 @@ pip install mitmproxy pycryptodome requests
 "用 jsrpc-mitm-auto 技能为 https://target.com 设置 JSRPC 加解密代理"
 
 # Claude Code 会自动：
-# 1. 启动浏览器并导航到目标
-# 2. 分析 JS 加密逻辑
-# 3. 生成对应的代理脚本
-# 4. 提供完整的启动命令
+# 1. 检查 .env 配置（首次使用会引导配置 Chrome / JSRPC 路径）
+# 2. 启动浏览器并导航到目标
+# 3. 分析 JS 加密逻辑
+# 4. 生成对应的代理脚本
+# 5. 提供完整的启动命令
+```
+
+### 首次使用配置
+
+首次运行 Skill 时，AI 会自动检测 `.env` 配置文件。如果未配置，会依次询问：
+
+1. **Chrome 浏览器路径** — 用于启动调试浏览器（js-reverse MCP 依赖）
+2. **JSRPC 服务端路径** — 仅 `jsrpc-mitm-auto` 模式需要
+
+AI 会验证路径有效性并保存到 `.env` 文件。也可手动创建：
+
+```bash
+cp .env.example .env
+# 编辑 .env 填入实际路径
 ```
 
 ### 手动启动
@@ -175,6 +190,8 @@ mitmdump -s proxy_scripts/upstream_jsrpc_proxy.py -p 8083
 ```
 AICryptoProxy/
 ├── README.md
+├── .env.example                   # 配置模板（复制为 .env 并填入路径）
+├── .gitignore                     # 忽略 .env 等本地文件
 ├── requirements.txt              # Python 依赖
 │
 ├── proxy_scripts/                # mitmproxy 代理脚本
@@ -184,7 +201,9 @@ AICryptoProxy/
 │   ├── upstream_jsrpc_proxy.py       # [模式B] 上游 JSRPC 代理
 │   └── jsrpc_client.py              # JSRPC HTTP 调用封装
 |
-|---skills  #mitm_proxy对于模式A，jsrpc-mitm-auto对应模式B
+├── skills/                      # Skill 定义
+│   ├── mitm_proxy/SKILL.md          # [模式A] 直接加解密
+│   └── jsrpc-mitm-auto/SKILL.md    # [模式B] JSRPC 零逆向
 │
 ├── inject_scripts/               # 浏览器注入脚本
 │   └── jsrpc_inject.js               # [模式B] JSRPC 注入脚本
