@@ -67,7 +67,7 @@ ai快速发展，让逆向不再困难，这里感谢**DeepSeek**大善人，以
 
 ## 2. AICryptoProxy 是什么
 
-### 2.1 一句话定义
+### 2.1 定义
 
 > **AICryptoProxy** 是一个基于 Claude Code + MCP 的智能渗透测试框架，通过 AI 自动完成 JS 逆向分析、加解密代理脚本生成、代理链路部署，让测试人员在 Burp Suite 中直接操作明文流量。
 
@@ -203,8 +203,6 @@ AICryptoProxy 使用**两层 mitmproxy 夹 Burp** 的架构：
 | 6 | 手动记录 Key 和 IV | AI 自动记忆并写入生成的脚本 |
 | 7 | 编写 Python 加解密函数 | AI 直接输出完整 `downstream_decrypt_proxy.py` |
 
-> [图片: Claude Code 自动分析 JS 加密逻辑的终端截图，显示 AI 正在搜索脚本、提取 Key]
-
 ---
 
 ## 4. 环境准备
@@ -265,21 +263,27 @@ AICryptoProxy 依赖 `js-reverse` MCP 服务来操控浏览器：
 
 ```bash
 # 启动一次 mitmproxy 生成证书
-mitmdump -p 8081
+mitmdump
+#默认监听8080端口
 
 # 证书位置：
 #   Windows: %USERPROFILE%\.mitmproxy\mitmproxy-ca-cert.p12
 #   Linux/Mac: ~/.mitmproxy/mitmproxy-ca-cert.pem
 
-# 浏览器访问 http://mitm.it 下载安装
+# 浏览器通过8080端口访问 http://mitm.it 下载安装
 
 #安装证书记得选择受信任的根证书，安装完成重启浏览器
 ```
 
-> [图片: 浏览器访问 http://mitm.it 的证书下载页面截图]
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506205030839.png)
+导入证书
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506205151685.png)
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506205243879.png)
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506205305675.png)
+重启浏览器`mitmproxy`就可以正常抓https的数据包了
 
 #### Burp Suite 证书
-
+这个就不过多赘述了
 ```
 Burp → Proxy → Options → Import/Export CA certificate
 浏览器导入：设置 → 隐私与安全 → 证书管理（受信任的根证书） → 导入
@@ -302,8 +306,8 @@ chmod +x rpc && ./rpc
 curl http://127.0.0.1:12080/list
 # {"status":"ok","data":[],"code":200,"msg":"success"}
 ```
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506205507348.png)
 
-> [图片: JSRPC 服务端启动成功的终端截图]
 
 ### 4.6 项目目录结构
 
@@ -329,9 +333,6 @@ AICryptoProxy/
 │
 └── test/                          # 测试输出
 ```
-
-> [图片: 项目在 VS Code 中的目录结构截图]
-
 ---
 
 ## 5. 模式 A：Direct Crypto——AI 直接逆向加解密
@@ -386,9 +387,6 @@ AI 自动定位加密函数并提取 Key：
 - `get_hook_data(hookId)` → 捕获函数参数和返回值
 - `evaluate_script("key")` → 提取 Key 值
 - `network_request(action="list")` → 获取真实请求格式
-
-> [图片: AI 自动追踪加密函数并提取 Key 的终端截图]
-
 #### Stage 3：重建 (Rebuild)
 
 AI 自动生成完整的加解密代码和代理脚本：
@@ -456,8 +454,6 @@ AI 给出完整的启动命令：
 | Repeater | 只能转发密文 | 可随意修改 JSON 再自动加密 |
 | Scanner | 扫描器看不懂密文 | 扫描器直接分析明文接口 |
 
-> [图片: Burp Proxy 中显示解密后明文请求的对比截图]
-
 ---
 
 ## 6. 模式 B：JSRPC Bridge——AI 零逆向桥接
@@ -497,8 +493,6 @@ AI 给出完整的启动命令：
 │  加解密完全在浏览器中执行，AI 不需要分析任何算法代码！              │
 └──────────────────────────────────────────────────────────────┘
 ```
-
-> [图片: JSRPC 原理架构图，展示 mitmproxy ↔ JSRPC服务端 ↔ 浏览器的调用链路]
 
 #### Stage 1：AI 分析请求格式
 
@@ -639,8 +633,6 @@ client.regAction("encrypt", function(resolve, param) {
     resolve(encrypted.toString());
 });
 ```
-
-> [图片: AI 分析动态 Key 场景并给出解决方案的终端截图]
 
 ---
 
@@ -800,8 +792,6 @@ AICryptoProxy 代表的不仅仅是一个工具，更是一种新的工作范式
                            │
                       [开始测试]
 ```
-
-> [图片: AICryptoProxy 完整工作链路的架构图]
 
 ### 9.4 参考资料
 
