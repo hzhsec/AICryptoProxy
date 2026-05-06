@@ -71,10 +71,10 @@ AI 模式:   AI 看代码 → AI 分析 → AI 生成脚本 → 人只需启动
 
 ### 2.2 GitHub
 
-> 项目地址：`https://github.com/yourusername/AICryptoProxy`（待上传）
+> 项目地址：`https://github.com/hzhsec/AICryptoProxy`
 
 ```bash
-git clone https://github.com/yourusername/AICryptoProxy
+git clone https://github.com/hzhsec/AICryptoProxy
 cd AICryptoProxy
 ```
 
@@ -210,7 +210,7 @@ AICryptoProxy 使用**两层 mitmproxy 夹 Burp** 的架构：
 ### 4.1 基础软件
 
 ```bash
-# Python 3.8+
+# Python 3.12+
 python --version
 
 # mitmproxy
@@ -259,7 +259,7 @@ AICryptoProxy 依赖 `js-reverse` MCP 服务来操控浏览器：
 
 两个 CA 证书需要被浏览器信任：
 
-#### mitmproxy 证书
+#### mitmproxy 证书（如果需要抓https数据包）
 
 ```bash
 # 启动一次 mitmproxy 生成证书
@@ -270,6 +270,8 @@ mitmdump -p 8081
 #   Linux/Mac: ~/.mitmproxy/mitmproxy-ca-cert.pem
 
 # 浏览器访问 http://mitm.it 下载安装
+
+#安装证书记得选择受信任的根证书，安装完成重启浏览器
 ```
 
 > [图片: 浏览器访问 http://mitm.it 的证书下载页面截图]
@@ -278,7 +280,7 @@ mitmdump -p 8081
 
 ```
 Burp → Proxy → Options → Import/Export CA certificate
-浏览器导入：设置 → 隐私与安全 → 证书管理 → 导入
+浏览器导入：设置 → 隐私与安全 → 证书管理（受信任的根证书） → 导入
 ```
 
 ### 4.5 JSRPC 服务端（模式 B 需要）
@@ -289,7 +291,7 @@ Burp → Proxy → Options → Import/Export CA certificate
 # Releases 页面下载对应平台的版本
 
 # Windows
-rpc.exe
+jsrpc.exe
 
 # Linux/Mac
 chmod +x rpc && ./rpc
@@ -305,23 +307,25 @@ curl http://127.0.0.1:12080/list
 
 ```
 AICryptoProxy/
-├── README.md                         # 项目说明
-├── requirements.txt                  # Python 依赖
+├── README.md
+├── requirements.txt              # Python 依赖
 │
-├── proxy_scripts/                    # mitmproxy 代理脚本（由 AI 生成）
+├── proxy_scripts/                # mitmproxy 代理脚本
 │   ├── downstream_decrypt_proxy.py   # [模式A] 下游解密代理
 │   ├── upstream_encrypt_proxy.py     # [模式A] 上游加密代理
 │   ├── downstream_jsrpc_proxy.py     # [模式B] 下游 JSRPC 代理
 │   ├── upstream_jsrpc_proxy.py       # [模式B] 上游 JSRPC 代理
 │   └── jsrpc_client.py              # JSRPC HTTP 调用封装
+|
+|---skills  #mitm_proxy对于模式A，jsrpc-mitm-auto对应模式B
 │
-├── inject_scripts/                   # 浏览器注入脚本
+├── inject_scripts/               # 浏览器注入脚本
 │   └── jsrpc_inject.js               # [模式B] JSRPC 注入脚本
 │
 ├── docs/
-│   └── AICryptoProxy_完全指南.md      # 本文
+│   └── AICryptoProxy_完全指南.md     # 完整使用文章
 │
-└── test/                             # 测试输出
+└── test/                          # 测试输出
 ```
 
 > [图片: 项目在 VS Code 中的目录结构截图]
@@ -342,7 +346,7 @@ AICryptoProxy/
 
 #### Stage 1：观察 (Observe)
 
-AI 通过 MCP 连接浏览器，自动收集信息：
+AI 通过 MCP 连接浏览器，自动收集信息：（ai会启动一个调试状态的浏览器）
 
 ```
 [AI] 正在连接浏览器...
@@ -420,6 +424,8 @@ addons = [DownstreamDecryptProxy()]
 ```
 
 同时 AI 还会生成对应的上游加密代理脚本。
+
+**最后**：ai会生成两个脚本还有使用方式
 
 #### Stage 4：部署 (Patch)
 
@@ -799,7 +805,7 @@ AICryptoProxy 代表的不仅仅是一个工具，更是一种新的工作范式
 
 #### 本文配套项目
 
-- [AICryptoProxy](https://github.com/yourusername/AICryptoProxy) — 完整项目代码
+- [AICryptoProxy](https://github.com/hzhsec/AICryptoProxy) — 完整项目代码
 
 #### 第三方依赖
 
