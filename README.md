@@ -121,7 +121,10 @@ pip install mitmproxy pycryptodome requests
 # 3. 分析 JS 加密逻辑
 # 4. 生成对应的代理脚本
 # 5. 提供完整的启动命令
+
 ```
+
+**这里只对模式A进行演示**
 
 **启动claud code**
 
@@ -197,7 +200,7 @@ jsrpc.exe
 
 # 终端 2：启动 Burp Suite
 
-# 在浏览器 Console 中粘贴 inject_scripts/jsrpc_inject.js
+# 在浏览器 Console 中粘贴 inject_scripts/jsrpc_inject.js的代码链接jsrpc服务端
 
 # 终端 3：启动下游代理
 mitmdump -s proxy_scripts/downstream_jsrpc_proxy.py \
