@@ -100,6 +100,7 @@ pip install mitmproxy pycryptodome requests
 
 # 5. 安装 MCP 服务（js-reverse）
 #    用于浏览器调试和 JS 逆向分析
+
 ```
 
 ### 使用流程
@@ -121,6 +122,41 @@ pip install mitmproxy pycryptodome requests
 # 4. 生成对应的代理脚本
 # 5. 提供完整的启动命令
 ```
+
+**启动claud code**
+
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506211316950.png)
+
+先加载skills目录下面的skill
+
+**使用命令**
+
+对指定网站进行逆向分析(要有基本的逆向mcp比如js-reverse)
+
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506212000409.png)
+
+**ai自主启动调试浏览器**
+
+开始逆向
+
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506212042676.png)
+
+对了如果弹窗需要要手动点击确认,不然会一直卡着
+**分析完成:**
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506212503515.png)
+
+最后生成报告:
+
+**下游解密代理** `downstream_decrypt_proxy.py`（浏览器 -> Burp 方向解密密文）
+**上游加密代理** `upstream_encrypt_proxy.py`（Burp -> 服务器方向加密明文）
+**加密分析报告**`ANALYSIS_REPORT.md`
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506213220684.png)
+
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506213235864.png)
+
+**AI 给出完整的启动命令**
+
+![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506213338041.png)![image.png](https://cdn.jsdmirror.com/gh/hzhsec/upload@main/20260506213352387.png)
 
 ### 首次使用配置
 
