@@ -442,7 +442,6 @@ AI 给出完整的启动命令：
   5. Burp 上游代理 → 127.0.0.1:8083
 ```
 
-> [图片: 三个终端窗口同时运行的截图——下游代理(8082)、Burp(8080)、上游代理(8083)]
 
 ### 5.3 实际效果
 
@@ -559,7 +558,6 @@ AI 自动生成 `jsrpc_inject.js`——包含完整的 HlClient 类和加解密 
 
 **注入方式**：在目标网站按 F12 打开开发者工具，Console 面板中粘贴上述完整脚本后回车。
 
-> [图片: 浏览器 Console 面板显示 "[JSRPC] 连接成功" 和 "encrypt/decrypt 已注册" 的截图]
 
 #### Stage 3：AI 生成 JSRPC 客户端和代理脚本
 
@@ -599,7 +597,6 @@ AI 同时生成 `downstream_jsrpc_proxy.py` 和 `upstream_jsrpc_proxy.py`，逻�
   5. mitmdump -s proxy_scripts/upstream_jsrpc_proxy.py -p 8083
 ```
 
-> [图片: 四个终端窗口——JSRPC 服务端、Burp、下游代理、上游代理 同时运行的截图]
 
 ### 6.3 动态 Key 场景
 
@@ -680,7 +677,6 @@ client.regAction("encrypt", function(resolve, param) {
 
 ### 8.1 AI 无法连接到浏览器
 
-> [图片: Claude Code 报无法连接浏览器的错误截图]
 
 ```
 原因：Chrome 未以调试模式启动
@@ -700,7 +696,6 @@ client.regAction("encrypt", function(resolve, param) {
 
 ### 8.3 Burp 中看到的是密文
 
-> [图片: Burp Proxy 中显示密文（错误示例）vs 显示明文（正确示例）的对比截图]
 
 ```
 原因：下游代理的 --mode upstream 参数缺失
@@ -712,7 +707,6 @@ client.regAction("encrypt", function(resolve, param) {
 
 ### 8.4 JSRPC 连接失败
 
-> [图片: 浏览器 Console 中 WebSocket 连接失败的报错截图]
 
 ```
 检查点：
